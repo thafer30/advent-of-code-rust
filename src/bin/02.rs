@@ -2,16 +2,14 @@ advent_of_code::solution!(2);
 
 pub fn part_one(input: &str) -> Option<u32> {
     let mut safe_reports = 0;
-    for line in input.lines() {
-        let iter = line.split_ascii_whitespace();
 
-        let levels: Vec<u32> = iter
+    for line in input.lines() {
+        let levels: Vec<u32> = line
+            .split_whitespace()
             .map(|item| item.parse::<u32>().unwrap())
             .collect();
 
-        let is_safe = are_levels_safe(&levels);
-
-        if is_safe {
+        if are_levels_safe(&levels) {
             safe_reports += 1;
         }
     }
@@ -20,61 +18,65 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 fn are_levels_safe(levels: &[u32]) -> bool {
-    let mut is_safe = true;
     let mut is_increasing = None;
-    for (index, item) in levels.into_iter().enumerate() {
-        if index > 0 {
-            let difference = *item as i32 - levels[index - 1] as i32;
 
-            let tmp_is_increasing = Some(difference > 0);
+    for window in levels.windows(2) {
+        let diff = window[1] as i32 - window[0] as i32;
 
-            if is_increasing == None {
-                is_increasing = tmp_is_increasing;
-            } else {
-                if is_increasing != tmp_is_increasing {
-                    is_safe = false;
-                    break;
-                }
+        if let Some(prev_increasing) = is_increasing {
+            if prev_increasing != (diff > 0) {
+                return false;
             }
+        } else {
+            is_increasing = Some(diff > 0);
+        }
 
-            let difference = item.abs_diff(levels[index - 1]);
+        let diff_abs = diff.abs();
 
-            if difference > 3 || difference < 1 {
-                is_safe = false;
-                break;
-            }
+        if diff_abs > 3 || diff_abs < 1 {
+            return false;
         }
     }
 
-    is_safe
+    true
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
     let mut safe_reports = 0;
-    for line in input.lines() {
-        let iter = line.split_ascii_whitespace();
 
-        let levels: Vec<u32> = iter
+    for line in input.lines() {
+        let levels: Vec<u32> = line
+            .split_whitespace()
             .map(|item| item.parse::<u32>().unwrap())
             .collect();
 
-        let is_safe = are_levels_safe(&levels);
-
-        if is_safe {
+        // First, check if the current levels are safe
+        if are_levels_safe(&levels) {
             safe_reports += 1;
         } else {
-            for (index, _) in levels.clone().into_iter().enumerate() {
-                let mut tmp_levels = levels.clone();
-                tmp_levels.remove(index);
-                if are_levels_safe(&tmp_levels) {
-                    safe_reports += 1;
-                    break;
-                }
+            // Only check for removals if the sequence is unsafe
+            if check_level_removals(&levels) {
+                safe_reports += 1;
             }
         }
     }
 
     Some(safe_reports)
+}
+
+fn check_level_removals(levels: &[u32]) -> bool {
+    for index in 0..levels.len() {
+        // Try removing the level at index `i`
+        let mut tmp_levels = levels.to_vec(); // Create a copy of the levels
+        tmp_levels.remove(index);
+
+        // Check if the modified levels are safe
+        if are_levels_safe(&tmp_levels) {
+            return true; // Found a safe configuration after removal
+        }
+    }
+
+    false // No valid removal made the sequence safe
 }
 
 #[cfg(test)]
