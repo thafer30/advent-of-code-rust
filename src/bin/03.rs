@@ -5,41 +5,24 @@ pub fn part_one(input: &str) -> Option<u32> {
 
     // Loop through each line
     for line in input.lines() {
-        let result: Vec<&str> = line.split("mul(").collect();
+        let parts = line.split("mul(");
 
-        for (index, item) in result.into_iter().enumerate() {
+        for (index, item) in parts.enumerate() {
             // Skip the first item
             if index == 0 {
                 continue;
             }
 
-            let comma_split_result = item.split_once(',');
-
-            if comma_split_result.is_none() {
-                continue;
+            // Extract the numbers after 'mul(' and ','
+            if let Some((first_str, rest)) = item.split_once(',') {
+                if let Ok(first_val) = first_str.parse::<u32>() {
+                    if let Some((second_str, _)) = rest.split_once(')') {
+                        if let Ok(second_val) = second_str.parse::<u32>() {
+                            total += first_val * second_val;
+                        }
+                    }
+                }
             }
-
-            let comma_split = comma_split_result.unwrap();
-
-            let first_multiple_result = comma_split.0.parse::<u32>();
-
-            if first_multiple_result.is_err() {
-                continue;
-            }
-
-            let paran_split_result = comma_split.1.split_once(')');
-
-            if paran_split_result.is_none() {
-                continue;
-            }
-
-            let second_multiple_result = paran_split_result.unwrap().0.parse::<u32>();
-
-            if second_multiple_result.is_err() {
-                continue;
-            }
-
-            total += first_multiple_result.unwrap() * second_multiple_result.unwrap();
         }
     }
 
@@ -53,65 +36,44 @@ pub fn part_two(input: &str) -> Option<u32> {
 
     // Loop through each line
     for line in input.lines() {
-        let result: Vec<&str> = line.split("mul(").collect();
+        let parts = line.split("mul(");
 
-        for (index, item) in result.into_iter().enumerate() {
+        for (index, item) in parts.enumerate() {
             enabled = next_enabled;
 
             let do_index = item.rfind("do()");
             let dont_index = item.rfind("don't()");
 
-            // If only the do is found
-            if do_index.is_some() && dont_index.is_none() {
-                next_enabled = true;
-
-            // If only the don't is found
-            } else if do_index.is_none() && dont_index.is_some() {
-                next_enabled = false;
-
-            // If both are found
-            } else if do_index.is_some() && dont_index.is_some() {
-                // See which one is the latest
-                if do_index.unwrap() > dont_index.unwrap() {
-                    next_enabled = true;
-                } else {
-                    next_enabled = false;
+            // Determine the next_enabled state
+            next_enabled = match (do_index, dont_index) {
+                (Some(_), None) => true,  // Only "do" found
+                (None, Some(_)) => false, // Only "don't" found
+                (Some(do_pos), Some(dont_pos)) => {
+                    if do_pos > dont_pos {
+                        true
+                    } else {
+                        false
+                    } // Decide based on the positions
                 }
-            }
+                _ => next_enabled, // No change if neither are found
+            };
 
             // Skip the first item
             if index == 0 {
                 continue;
             }
 
-            let comma_split_result = item.split_once(',');
-
-            if comma_split_result.is_none() {
-                continue;
-            }
-
-            let comma_split = comma_split_result.unwrap();
-
-            let first_multiple_result = comma_split_result.unwrap().0.parse::<u32>();
-
-            if first_multiple_result.is_err() {
-                continue;
-            }
-
-            let paran_split_result = comma_split.1.split_once(')');
-
-            if paran_split_result.is_none() {
-                continue;
-            }
-
-            let second_multiple_result = paran_split_result.unwrap().0.parse::<u32>();
-
-            if second_multiple_result.is_err() {
-                continue;
-            }
-
-            if enabled {
-                total += first_multiple_result.unwrap() * second_multiple_result.unwrap();
+            // Extract the numbers after 'mul(' and ','
+            if let Some((first_str, rest)) = item.split_once(',') {
+                if let Ok(first_val) = first_str.parse::<u32>() {
+                    if let Some((second_str, _)) = rest.split_once(')') {
+                        if let Ok(second_val) = second_str.parse::<u32>() {
+                            if enabled {
+                                total += first_val * second_val;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
